@@ -11,10 +11,11 @@ DEST_DIR="$PANDORA_DIR/audio-dest"
 if [ ! -f "$STATION_FILE" ]; then
 	echo "Error: please provide station.txt file in $PANDORA_DIR"
 	exit 1
-fi
-
-if [ ! -f "$PANDORA_DIR/templates/config-auth" ]; then
+elif [ ! -f "$PANDORA_DIR/templates/config-auth" ]; then
 	echo "Error: please provide config-auth file in $PANDORA_DIR/templates"
+	exit 1
+elif [ ! -f "$PANDORA_DIR/bin/pianobar" ]; then
+	echo "Error: please compile pianobar from $PANDORA_DIR/pianobar-source and move the binary to $PANDORA_DIR/bin/pianobar"
 	exit 1
 fi
 

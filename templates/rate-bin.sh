@@ -15,6 +15,9 @@ esac
 if [ ! -f "$PANDORA_DIR/templates/config-auth" ]; then
 	echo "Error: please provide config-auth file in $PANDORA_DIR/templates"
 	exit 1
+elif [ ! -f "$PANDORA_DIR/bin/pianobar" ]; then
+	echo "Error: please compile pianobar from $PANDORA_DIR/pianobar-source and move the binary to $PANDORA_DIR/bin/pianobar"
+	exit 1
 fi
 
 # Create config file, only if necessary.
