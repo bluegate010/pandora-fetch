@@ -1,0 +1,72 @@
+#!/bin/bash
+
+PANDORA_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+AUDIO_DIR="$PANDORA_DIR/audio-dest-tmp"
+
+# Since URLs can contain "=" characters, we need to encode them
+# for the create-variables loop below.
+urldecode() {
+	perl -pe 's/\+/ /g; s/%([0-9a-f]{2})/chr(hex($1))/eig'
+}
+
+# A very restrictive set of allowed characters.
+cleanpathname() {
+	sed -e "s/[^ '\",*()A-Za-z0-9._-]/_/g"
+}
+
+if [ $1 != "songstart" ]; then
+	exit 0
+fi
+
+# Create variables
+while read L; do
+	k="`echo "$L" | cut -d '=' -f 1`"
+	v="`echo "$L" | cut -d '=' -f 2`"
+	export "$k=$v"
+done < <(grep -e '^\(title\|artist\|album\|stationName\|rating\|audioUrl\|coverUrl\|trackToken\|stationId\)=' /dev/stdin)
+
+stationName=$(echo "$stationName" | cleanpathname)
+fileName=$(echo "$title - $artist - $album" | cleanpathname)
+
+audioDestDir="$AUDIO_DIR/audio/$stationName"
+rateDestDir="$AUDIO_DIR/rate-bin/$stationName"
+
+# Create destination directory if it doesn't exist yet
+mkdir -p "$audioDestDir"
+mkdir -p "$rateDestDir"
+
+numFiles=$(printf %02d `ls -l "$audioDestDir" | wc -l`)
+
+if [ $rating = "1" ]; then
+	# Indicate thumbs-up status
+	fileName="$numFiles (*) $fileName"
+else
+	fileName="$numFiles $fileName"
+fi
+
+# Fetch the audio and cover art files
+wget -q -O "$audioDestDir/$fileName.aac" $(echo "$audioUrl" | urldecode)
+wget -q -O "$audioDestDir/$fileName.jpg" $(echo "$coverUrl" | urldecode)
+
+# Set ID3 tags
+AtomicParsley "$audioDestDir/$fileName.aac" \
+	--title "$title" \
+	--artist "$artist" \
+	--album "$album" \
+	--artwork "$audioDestDir/$fileName.jpg" \
+	--output "$audioDestDir/$fileName.m4a"
+
+# Clean up
+rm -f "$audioDestDir/$fileName.aac" "$audioDestDir/$fileName.jpg"
+
+if [ $rating = "0" ]; then
+	# Allow song to be rated in the future
+	sed -e "s|__PANDORA_HOME__|$HOME|g" \
+		-e "s|__PANDORA_DIR__|$PANDORA_DIR|g" \
+		-e "s/__PANDORA_ID__/`whoami`/g" \
+		-e "s/__TRACK_TOKEN__/$trackToken/g" \
+		-e "s/__STATION_ID__/$stationId/g" \
+		"$PANDORA_DIR/templates/rate-bin.sh" > "$rateDestDir/$fileName" # Omitting .sh just because
+	
+	chmod g+x "$rateDestDir/$fileName"
+fi

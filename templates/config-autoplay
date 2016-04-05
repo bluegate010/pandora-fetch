@@ -1,0 +1,6 @@
+# Playback
+mute = 1
+autostart_station = __AUTOSTART_STATION__
+
+# Misc
+event_command = __PANDORA_DIR__/bin/eventcmd

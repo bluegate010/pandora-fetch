@@ -1,0 +1,13 @@
+*.o
+*.lo
+*.d
+# vim swap files
+.*.sw*
+pianobar
+libpiano.a
+libpiano.so*
+pianobar-source/contrib
+stations.txt
+audio-dest
+audio-dest-tmp
+templates/config-auth

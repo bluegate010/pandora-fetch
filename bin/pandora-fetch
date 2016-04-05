@@ -1,0 +1,72 @@
+#!/bin/bash
+
+PANDORA_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+CONFIG_DIR="$HOME/.config/pianobar"
+
+STATION_FILE="$PANDORA_DIR/stations.txt"
+
+TEMP_DIR="$PANDORA_DIR/audio-dest-tmp"
+DEST_DIR="$PANDORA_DIR/audio-dest"
+
+if [ ! -f "$STATION_FILE" ]; then
+	echo "Error: please provide station.txt file in $PANDORA_DIR"
+	exit 1
+fi
+
+if [ ! -f "$PANDORA_DIR/templates/config-auth" ]; then
+	echo "Error: please provide config-auth file in $PANDORA_DIR/templates"
+	exit 1
+fi
+
+# Setup
+rm -rf "$TEMP_DIR"
+mkdir -p "$TEMP_DIR"
+rm -f "$CONFIG_DIR/state"
+
+# We have to collect the lines into memory ahead of time,
+# since the loop body is long-running, and there's a bash
+# bug that would result in the first few characters of
+# $line getting lopped off during subsequent loops.
+
+station_lines=()
+
+while read line; do
+	if [[ "$line" =~ ^[0-9] ]]; then
+		station_lines+=("$line")
+	fi
+done < $STATION_FILE
+
+for line in "${station_lines[@]}"; do
+	station_id=$(echo $line   | cut -d ' ' -f 1)
+	duration=$(echo $line     | cut -d ' ' -f 2)
+	station_name=$(echo $line | cut -d ' ' -f 3-)
+	
+	echo "$station_id - $duration - $station_name"
+	
+	# Set station id in config file
+	cat "$PANDORA_DIR/templates/config-auth" \
+		"$PANDORA_DIR/templates/config-autoplay" \
+	| \
+	sed -e "s/__AUTOSTART_STATION__/$station_id/g" \
+	    -e "s|__PANDORA_DIR__|$PANDORA_DIR|g" \
+	> "$CONFIG_DIR/config"
+	
+	# Launch Pianobar
+	$PANDORA_DIR/bin/pianobar > /dev/null 2>&1 & export PIANOBAR_PID=$!
+	
+	# Wait for audio to collect
+	sleep $duration
+	
+	# Kill Pianobar
+	kill $PIANOBAR_PID
+	wait $PIANOBAR_PID 2>/dev/null
+done
+
+# Move staging to dest
+rm -rf "$DEST_DIR"
+mv "$TEMP_DIR" "$DEST_DIR"
+
+# Remove config file with passwords
+rm -f "$CONFIG_DIR/config" "$CONFIG_DIR/state"
+
+exit
