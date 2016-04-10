@@ -3,6 +3,14 @@
 PANDORA_DIR="__PANDORA_DIR__"
 CONFIG_DIR="__PANDORA_HOME__/.config/pianobar"
 
+do_as_pandora () {
+	if [ `whoami` == "__PANDORA_ID__" ]; then
+		bash -c "$*"
+	else
+		sudo -E -u __PANDORA_ID__ bash -c "$*"
+	fi
+}
+
 case "$1" in
 	love|ban)
 		rating="$1"
@@ -23,8 +31,8 @@ fi
 # Create config file, only if necessary.
 if [ ! -f "$CONFIG_DIR/config" ]; then
 	addedConfig=true
-	sudo -u __PANDORA_ID__ cp "$PANDORA_DIR/templates/config-auth" "$CONFIG_DIR/config"
-	sudo -u __PANDORA_ID__ rm -f "$CONFIG_DIR/state"
+	do_as_pandora cp "$PANDORA_DIR/templates/config-auth" "$CONFIG_DIR/config"
+	do_as_pandora rm -f "$CONFIG_DIR/state"
 fi
 
 # Placeholders replaced by eventcmd.sh
@@ -36,8 +44,8 @@ export AUTORATE_RATING="$rating"
 export HOME="__PANDORA_HOME__"
 
 # -E to pass in environment variables we just set.
-sudo -E -u __PANDORA_ID__ $PANDORA_DIR/bin/pianobar
+do_as_pandora $PANDORA_DIR/bin/pianobar
 
 if [ "$addedConfig" = true ]; then
-	sudo -u __PANDORA_ID__ rm -f "$CONFIG_DIR/config" "$CONFIG_DIR/state"
+	do_as_pandora rm -f "$CONFIG_DIR/config" "$CONFIG_DIR/state"
 fi

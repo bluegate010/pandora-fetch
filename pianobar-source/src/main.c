@@ -334,7 +334,7 @@ static bool autoRateSong (BarApp_t *app, char *trackToken, char *stationId, char
 		return false;
 	}
 
-	printf("Autorating song...\nTrack token: %s\nStation ID: %s\n", trackToken, stationId);
+	printf("Autorating song...\n");
 
 	PianoSong_t song = {
 		.trackToken = trackToken,

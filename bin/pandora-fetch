@@ -5,8 +5,9 @@ CONFIG_DIR="$HOME/.config/pianobar"
 
 STATION_FILE="$PANDORA_DIR/stations.txt"
 
-TEMP_DIR="$PANDORA_DIR/audio-dest-tmp"
-DEST_DIR="$PANDORA_DIR/audio-dest"
+TEMP_DIR="$PANDORA_DIR/audio-dest/tmp"
+DEST_DIR="$PANDORA_DIR/audio-dest/today"
+YEST_DIR="$PANDORA_DIR/audio-dest/yesterday"
 
 if [ ! -f "$STATION_FILE" ]; then
 	echo "Error: please provide station.txt file in $PANDORA_DIR"
@@ -64,7 +65,12 @@ for line in "${station_lines[@]}"; do
 done
 
 # Move staging to dest
-rm -rf "$DEST_DIR"
+rm -rf "$YEST_DIR"
+
+if [ -d "$DEST_DIR" ]; then
+	mv "$DEST_DIR" "$YEST_DIR"
+fi
+
 mv "$TEMP_DIR" "$DEST_DIR"
 
 # Remove config file with passwords

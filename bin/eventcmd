@@ -1,7 +1,7 @@
 #!/bin/bash
 
 PANDORA_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
-AUDIO_DIR="$PANDORA_DIR/audio-dest-tmp"
+AUDIO_DIR="$PANDORA_DIR/audio-dest/tmp"
 
 # Since URLs can contain "=" characters, we need to encode them
 # for the create-variables loop below.
@@ -28,7 +28,7 @@ done < <(grep -e '^\(title\|artist\|album\|stationName\|rating\|audioUrl\|coverU
 stationName=$(echo "$stationName" | cleanpathname)
 fileName=$(echo "$title - $artist - $album" | cleanpathname)
 
-audioDestDir="$AUDIO_DIR/audio/$stationName"
+audioDestDir="$AUDIO_DIR/music/$stationName"
 rateDestDir="$AUDIO_DIR/rate-bin/$stationName"
 
 # Create destination directory if it doesn't exist yet
@@ -68,5 +68,5 @@ if [ $rating = "0" ]; then
 		-e "s/__STATION_ID__/$stationId/g" \
 		"$PANDORA_DIR/templates/rate-bin.sh" > "$rateDestDir/$fileName" # Omitting .sh just because
 	
-	chmod g+x "$rateDestDir/$fileName"
+	chmod +x "$rateDestDir/$fileName"
 fi
